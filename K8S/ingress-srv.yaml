@@ -4,10 +4,10 @@ metadata:
   name: ingress-srv
   annotations:
     kubernetes.io/ingress.class: nginx
-    nginx.ingress.kubernetes.io/use-regex: 'true'
+    nginx.ingress.kubernetes.io/use-regex: "true"
 spec:
   rules:
-    - host: acme.com
+    - host: micro-srv-dot-net-demo.com
       http:
         paths:
           - path: /api/platforms
