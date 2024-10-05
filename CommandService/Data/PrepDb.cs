@@ -1,48 +1,33 @@
-﻿//using CommandService.Data;
+﻿using CommandService.Models;
+using CommandService.SynDataServices.Grpc;
 
-//namespace PlatformService.Data;
+namespace CommandService.Data;
 
-//public static class PrepDb
-//{
-//	public static void PrepPopulation(this IApplicationBuilder app, bool isProductionEnv)
-//	{
-//		using (var serviceScope = app.ApplicationServices.CreateScope())
-//		{
-//			var dbContext = serviceScope.ServiceProvider.GetService<AppDbContext>();
-//			SeedData(dbContext!, isProductionEnv);
-//		}
+public static class PrepDb
+{
+	public static void PrepPopulation(this IApplicationBuilder app)
+	{
+		using (var serviceScope = app.ApplicationServices.CreateScope())
+		{
+			var grpcClient = serviceScope.ServiceProvider.GetService<IPlatformDataClient>();
+			var platforms = grpcClient.ReturnAllPlatforms();
 
-//	}
+			var repo = serviceScope.ServiceProvider.GetService<ICommandRepository>();
+			SeedData(repo, platforms);
+		}
 
-//	private static void SeedData(AppDbContext dbContext, bool isProductionEnv)
-//	{
-//		if (isProductionEnv)
-//		{
-//			try
-//			{
-//				Console.WriteLine("---> Attempting to apply migrations");
-//				dbContext.Database.Migrate();
-//			}
-//			catch (Exception ex)
-//			{
-//				Console.WriteLine($"---> Could not run migrations: {ex.Message}");
-//			}
-//		}
-//		if (!dbContext.Platforms.Any())
-//		{
-//			Console.WriteLine("--> Seeding Data <--");
-//			dbContext.Platforms.AddRange
-//			(
-//				new Platform { Name = "Dotnet", Publisher = "Microsoft", Cost = "Free" },
-//				new Platform { Name = "SQL Server Express", Publisher = "Microsoft", Cost = "Free" },
-//				new Platform { Name = "Kubernetes", Publisher = "Cloud Native Computing Foundation", Cost = "Free" }
-//			);
+	}
 
-//			dbContext.SaveChanges();
-//		}
-//		else
-//		{
-//			Console.WriteLine("--> We already have data <--");
-//		}
-//	}
-//}
+	private static void SeedData(ICommandRepository repository, IEnumerable<Platform> platforms)
+	{
+		Console.WriteLine("Seeding new platforms");
+		foreach (var platform in platforms)
+		{
+			if (!repository.ExternalPlatformExists(platform.ExternalId))
+			{
+				repository.CreatePlatform(platform);
+			}
+			repository.SaveChanges();
+		}
+	}
+}

@@ -1,10 +1,14 @@
+using Microsoft.AspNetCore.Server.Kestrel.Core;
+using Microsoft.AspNetCore.Server.Kestrel.Transport.Sockets;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Options;
 using PlatformService.AsyncDataServices;
 using PlatformService.Data;
+using PlatformService.SyncDataServices.Grpc;
 using PlatformService.SyncDataServices.Http;
 
 var builder = WebApplication.CreateBuilder(args);
-
 
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
@@ -14,6 +18,7 @@ builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 builder.Services.AddSingleton<IMessageBusClient, MessageBusClient>();
 builder.Services.AddScoped<IPlatformRepository, PlatformRepository>();
 builder.Services.AddHttpClient<ICommandDataClient, HttpCommandDataClient>();
+builder.Services.AddGrpc();
 
 if (builder.Environment.IsProduction())
 {
@@ -38,6 +43,16 @@ Console.WriteLine(builder.Configuration["CommandServiceUrl"]);
 
 app.MapControllers();
 
+app.MapGrpcService<GrpcPlatformService>();
+
 app.PrepPopulation(builder.Environment.IsProduction());
 
 app.Run();
+
+var server = new KestrelServer(
+	Options.Create(new KestrelServerOptions()),
+	new SocketTransportFactory(
+		Options.Create(new SocketTransportOptions()),
+		new NullLoggerFactory()),
+	new NullLoggerFactory()
+	);

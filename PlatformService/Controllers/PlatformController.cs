@@ -55,15 +55,17 @@ public class PlatformController : ControllerBase
 
 		var platformDto = _mapper.Map<PlatformReadDto>(platform);
 
-		try
-		{
-			await _commandDataClient.SendPlatformToCommand(platformDto);
-		}
-		catch (Exception ex)
-		{
-			Console.WriteLine($"Could not send synchronously: {ex.Message}");
-		}
+		// Sync
+		//try
+		//{
+		//	await _commandDataClient.SendPlatformToCommand(platformDto);
+		//}
+		//catch (Exception ex)
+		//{
+		//	Console.WriteLine($"Could not send synchronously: {ex.Message}");
+		//}
 
+		// Async
 		try
 		{
 			var platformPublishedDto = _mapper.Map<PlatformPublishedDto>(platformDto);
